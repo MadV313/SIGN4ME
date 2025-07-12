@@ -68,7 +68,7 @@ class SignBuild(commands.Cog):
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
-        # ✅ Step 1: Generate character matrix
+        # ✅ Step 1: Generate and flip character matrix
         matrix = [row[::-1] for row in generate_letter_matrix(text.upper())[::-1]]
 
         if not matrix or not any('#' in row for row in matrix):
