@@ -9,10 +9,12 @@ import json
 from utils.config_utils import get_guild_config, save_guild_config
 from logic.text_matrix import generate_letter_matrix
 from logic.render_sign_preview import render_sign_preview
-from sign_generator import letter_to_object_list, OBJECT_CLASS_MAP
-from sign_packager import create_sign_zip
+from sign_generator import letter_to_object_list, OBJECT_CLASS_MAP  # ✅ Corrected path
+from sign_packager import create_sign_zip  # ✅ Corrected path
 from utils.channel_utils import get_channel_id
 from utils.permissions import is_admin_user
+
+MAX_OBJECTS = 1200  # Redundant but good to reference in messaging
 
 class SignBuild(commands.Cog):
     def __init__(self, bot):
@@ -72,9 +74,13 @@ class SignBuild(commands.Cog):
         }.get(orientation.value if orientation else "upright")
 
         # ✅ Step 1: Generate matrix
-        matrix = generate_letter_matrix(text)
+        matrix = generate_letter_matrix(text.upper())  # Force uppercase
 
-        # ✅ Step 2: Convert to actual object class name
+        if not matrix or not any('#' in row for row in matrix):
+            await interaction.followup.send("⚠️ No valid characters detected. Please use capital A–Z letters only.", ephemeral=True)
+            return
+
+        # ✅ Step 2: Convert to object list
         try:
             objects = letter_to_object_list(
                 matrix=matrix,
@@ -89,7 +95,13 @@ class SignBuild(commands.Cog):
             await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
             return
 
-        # ✅ Step 3: Save JSON + preview path
+        if len(objects) >= MAX_OBJECTS:
+            await interaction.followup.send(
+                f"⚠️ Object cap reached ({MAX_OBJECTS} max). Sign may be incomplete.",
+                ephemeral=True
+            )
+
+        # ✅ Step 3: Save JSON + preview
         output_json_path = os.path.join("outputs", "Sign4ME.json")
         preview_path = os.path.join("previews", "sign_preview.png")
 
@@ -99,10 +111,9 @@ class SignBuild(commands.Cog):
         with open(output_json_path, "w") as f:
             json.dump({"Objects": objects}, f, indent=2)
 
-        # ✅ Step 4: Render preview
         render_sign_preview(matrix, preview_path, object_type=obj_type)
 
-        # ✅ Step 5: Update + save guild config
+        # ✅ Step 4: Save config
         config["default_object"] = obj_type
         config["defaultScale"] = overall_scale
         config["defaultSpacing"] = object_spacing
@@ -113,7 +124,7 @@ class SignBuild(commands.Cog):
         config["preview_output_path"] = preview_path
         save_guild_config(guild_id, config)
 
-        # ✅ Step 6: Create .zip
+        # ✅ Step 5: Zip export
         final_path = create_sign_zip(
             output_json_path,
             preview_path,
@@ -128,12 +139,12 @@ class SignBuild(commands.Cog):
             export_mode="json"
         )
 
-        # ✅ Step 7: Post to gallery/log/admin channel
+        # ✅ Step 6: Gallery post
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
         if not channel:
-            await interaction.followup.send("❌ Could not find configured gallery channel.", ephemeral=True)
+            await interaction.followup.send("❌ Could not find configured gallery/admin channel.", ephemeral=True)
             return
 
         await channel.send(
