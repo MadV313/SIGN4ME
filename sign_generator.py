@@ -29,11 +29,14 @@ OBJECT_SIZE_ADJUSTMENTS = {
 MAX_OBJECTS = 950  # ⛔ Optional cap to avoid CE lag/crash
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None) -> list:
+    if object_type not in OBJECT_CLASS_MAP:
+        raise ValueError(f"❌ Unrecognized object type: '{object_type}'. Make sure it matches one of: {list(OBJECT_CLASS_MAP.keys())}")
+    
+    resolved_type = OBJECT_CLASS_MAP[object_type]
+    spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
+
     rows = len(matrix)
     cols = len(matrix[0])
-    resolved_type = OBJECT_CLASS_MAP.get(object_type, object_type)
-
-    spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
     # Centered placement math
     offset_x = round(origin["x"] - ((cols // 2) * spacing) + offset.get("x", 0), 4)
