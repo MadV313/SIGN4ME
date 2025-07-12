@@ -65,9 +65,15 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
 
+            # ✅ Correct position based on orientation
+            if ypr_mode == "upright":
+                obj_pos = [round(pos_x, 4), round(pos_z, 4), round(base_y, 4)]  # stack vertically (Z → Y)
+            else:
+                obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # flat on ground
+
             obj = {
                 "name": resolved_type,
-                "pos": [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)],
+                "pos": obj_pos,
                 "ypr": ypr,
                 "scale": scale,
                 "enableCEPersistency": 0,
