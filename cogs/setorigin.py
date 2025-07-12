@@ -22,14 +22,14 @@ class SetOrigin(commands.Cog):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
-        guild_id = interaction.guild.id
+        guild_id = str(interaction.guild.id)
         config = get_guild_config(guild_id)
 
-        # ⬇️ Internally map z ➝ y and y ➝ z for upright placement logic
+        # ✅ Apply upright stacking logic: swap Z ➝ Y and Y ➝ Z
         config["origin_position"] = {
             "x": x,
-            "y": z,  # z becomes height
-            "z": y   # y becomes depth
+            "y": z,  # Depth (Z) becomes height (Y)
+            "z": y   # Height (Y) becomes depth (Z)
         }
 
         save_guild_config(guild_id, config)
@@ -42,4 +42,3 @@ class SetOrigin(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(SetOrigin(bot))
-
