@@ -8,7 +8,7 @@ import os
 from utils.config_utils import get_guild_config, save_guild_config
 from logic.text_matrix import generate_letter_matrix
 from logic.render_sign_preview import render_sign_preview
-from sign_packager import create_qr_zip
+from sign_packager import create_sign_zip
 from utils.channel_utils import get_channel_id
 from utils.permissions import is_admin_user
 
@@ -113,7 +113,7 @@ class SignBuild(commands.Cog):
         save_guild_config(guild_id, config)
 
         # Step 6: Create .zip bundle (JSON + PNG)
-        final_path = create_qr_zip(
+        final_path = create_sign_zip(
             output_json_path,
             preview_path,
             config.get("zip_output_path", "Sign4ME.zip"),
