@@ -68,11 +68,6 @@ class SignBuild(commands.Cog):
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
-        ypr = {
-            "upright": [0.0, 90.0, 0.0],
-            "flat": [0.0, 0.0, 90.0]
-        }.get(orientation.value if orientation else "upright")
-
         # ✅ Step 1: Generate character matrix
         matrix = generate_letter_matrix(text.upper())
 
@@ -80,7 +75,7 @@ class SignBuild(commands.Cog):
             await interaction.followup.send("⚠️ No valid characters detected. Please use capital A–Z letters only.", ephemeral=True)
             return
 
-        # ✅ Step 2: Generate objects from matrix
+        # ✅ Step 2: Generate objects from matrix using internal YPR mode
         try:
             objects = letter_to_object_list(
                 matrix=matrix,
@@ -89,19 +84,19 @@ class SignBuild(commands.Cog):
                 offset=offset,
                 scale=overall_scale,
                 spacing=object_spacing,
-                ypr=ypr
+                ypr_mode=orientation.value if orientation else "upright"
             )
         except ValueError as e:
             await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
             return
 
         if not objects:
-            await interaction.followup.send("⚠️ Sign generation failed. No objects were created. Check your origin and settings.", ephemeral=True)
+            await interaction.followup.send("⚠️ Sign generation failed. No objects were created. Check your origin and spacing settings.", ephemeral=True)
             return
 
         if len(objects) >= MAX_OBJECTS:
             await interaction.followup.send(
-                f"⚠️ Object cap reached ({MAX_OBJECTS} max). Sign may be incomplete.",
+                f"⚠️ Object cap reached ({MAX_OBJECTS} max). The sign may be incomplete.",
                 ephemeral=True
             )
 
@@ -133,13 +128,11 @@ class SignBuild(commands.Cog):
             output_json_path,
             preview_path,
             config.get("zip_output_path", "Sign4ME.zip"),
-            extra_text=(
-                f"Sign Size: {len(matrix[0])}x{len(matrix)}\n"
-                f"Total Objects: {len(objects)}\n"
-                f"Object Used: {OBJECT_CLASS_MAP.get(obj_type, obj_type)}\n"
-                f"Scale: {overall_scale} | Spacing: {object_spacing}\n"
-                f"Orientation: {orientation.value if orientation else 'upright'}"
-            ),
+            extra_text=(f"Sign Size: {len(matrix[0])}x{len(matrix)}\n"
+                        f"Total Objects: {len(objects)}\n"
+                        f"Object Used: {OBJECT_CLASS_MAP.get(obj_type, obj_type)}\n"
+                        f"Scale: {overall_scale} | Spacing: {object_spacing}\n"
+                        f"Orientation: {orientation.value if orientation else 'upright'}"),
             export_mode="json"
         )
 
@@ -152,15 +145,13 @@ class SignBuild(commands.Cog):
             return
 
         await channel.send(
-            content=(
-                f"🪧 **Sign Build Complete**\n"
-                f"• Size: {len(matrix[0])}x{len(matrix)}\n"
-                f"• Objects: {len(objects)}\n"
-                f"• Type: `{OBJECT_CLASS_MAP.get(obj_type, obj_type)}`\n"
-                f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`\n"
-                f"• Orientation: `{orientation.value if orientation else 'upright'}`\n"
-                f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
-            ),
+            content=(f"🪧 **Sign Build Complete**\n"
+                     f"• Size: {len(matrix[0])}x{len(matrix)}\n"
+                     f"• Objects: {len(objects)}\n"
+                     f"• Type: `{OBJECT_CLASS_MAP.get(obj_type, obj_type)}`\n"
+                     f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`\n"
+                     f"• Orientation: `{orientation.value if orientation else 'upright'}`\n"
+                     f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"),
             files=[
                 discord.File(output_json_path, filename="Sign4ME.json"),
                 discord.File(preview_path, filename="sign_preview.png")
