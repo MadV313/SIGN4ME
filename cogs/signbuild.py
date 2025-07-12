@@ -66,7 +66,7 @@ class SignBuild(commands.Cog):
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
-        ypr_override = {
+        ypr = {
             "upright": [0.0, 90.0, 0.0],
             "flat": [0.0, 0.0, 90.0]
         }.get(orientation.value if orientation else "upright")
@@ -83,7 +83,7 @@ class SignBuild(commands.Cog):
                 offset=offset,
                 scale=overall_scale,
                 spacing=object_spacing,
-                ypr_override=ypr_override
+                ypr=ypr
             )
         except ValueError as e:
             await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
