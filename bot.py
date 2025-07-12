@@ -4,9 +4,6 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
-import json
-
-TOKEN_PATH = "config.json"
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -26,19 +23,13 @@ async def main():
         if filename.endswith(".py"):
             await bot.load_extension(f"cogs.{filename[:-3]}")
 
-    # Load token from config.json
-    if not os.path.exists(TOKEN_PATH):
-        print("❌ config.json not found.")
-        return
-    with open(TOKEN_PATH, "r") as f:
-        config = json.load(f)
-    token = os.environ.get("DISCORD_TOKEN")
+    # Load token from environment variable (Railway-style)
+    token = os.environ.get("DISCORD_BOT_TOKEN")
     if not token:
-        print("❌ Bot token missing in config.json")
+        print("❌ DISCORD_BOT_TOKEN not set in environment variables.")
         return
 
     await bot.start(token)
 
 if __name__ == "__main__":
     asyncio.run(main())
-
