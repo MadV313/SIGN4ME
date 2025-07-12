@@ -26,15 +26,16 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "BoxWooden": 1.0
 }
 
-MAX_OBJECTS = 950  # ⛔ Optional cap to avoid CE lag/crash
+MAX_OBJECTS = 1200  # 🔼 Increased cap to allow larger signs
 
-def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None) -> list:
+def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr: list = None) -> list:
     # Ensure valid object type and resolve to real classname
     if object_type not in OBJECT_CLASS_MAP:
         raise ValueError(f"❌ Unrecognized object type: '{object_type}'. Must be one of: {list(OBJECT_CLASS_MAP.keys())}")
 
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
+    ypr = ypr or [0.0, 90.0, 0.0]  # 🔁 Default upright if not overridden
 
     rows = len(matrix)
     cols = len(matrix[0])
@@ -50,17 +51,17 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
         for col in reversed(range(cols)):
             if matrix[row][col] != "#":
                 continue
-    
+
             base_x = offset_x + (col * spacing)
             base_z = offset_z + (row * spacing)
-    
+
             if len(objects) >= MAX_OBJECTS:
                 return objects
-    
+
             obj = {
                 "name": resolved_type,
                 "pos": [base_x, top_y, base_z],
-                "ypr": [0.0, 90.0, 0.0],  # 🔁 Stand upright
+                "ypr": ypr,
                 "scale": scale,
                 "enableCEPersistency": 0,
                 "customString": ""
@@ -87,7 +88,8 @@ if __name__ == "__main__":
         CONFIG["origin_position"],
         CONFIG.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
         CONFIG.get("defaultScale", 0.5),
-        CONFIG.get("defaultSpacing", 1.0)
+        CONFIG.get("defaultSpacing", 1.0),
+        ypr=[0.0, 90.0, 0.0]  # ✅ Test upright
     )
     save_object_json(obj_list, CONFIG["object_output_path"])
     print(f"✅ Generated {len(obj_list)} sign objects.")
