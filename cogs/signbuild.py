@@ -23,7 +23,8 @@ class SignBuild(commands.Cog):
         text="The capital letters to build as a sign (A-Z only)",
         overall_scale="Overall object scale multiplier (default 0.5 or overridden per object)",
         object_spacing="Spacing between objects (default 1.0 or overridden per object)",
-        object_type="Choose the object to use for the sign"
+        object_type="Choose the object to use for the sign",
+        orientation="Object orientation: upright (billboard) or flat (ground)"
     )
     @app_commands.choices(
         object_type=[
@@ -34,6 +35,10 @@ class SignBuild(commands.Cog):
             app_commands.Choice(name="Wooden Crate", value="WoodenCrate"),
             app_commands.Choice(name="Improvised Container", value="ImprovisedContainer"),
             app_commands.Choice(name="Dry Bag (Black)", value="DryBag_Black"),
+        ],
+        orientation=[
+            app_commands.Choice(name="Upright (Billboard Style)", value="upright"),
+            app_commands.Choice(name="Flat (On Ground)", value="flat")
         ]
     )
     async def signbuild(
@@ -41,6 +46,7 @@ class SignBuild(commands.Cog):
         interaction: discord.Interaction,
         text: str,
         object_type: app_commands.Choice[str],
+        orientation: app_commands.Choice[str] = None,
         overall_scale: float = None,
         object_spacing: float = None
     ):
@@ -60,6 +66,11 @@ class SignBuild(commands.Cog):
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
+        ypr_override = {
+            "upright": [0.0, 90.0, 0.0],
+            "flat": [0.0, 0.0, 90.0]
+        }.get(orientation.value if orientation else "upright")
+
         # ✅ Step 1: Generate matrix
         matrix = generate_letter_matrix(text)
 
@@ -71,7 +82,8 @@ class SignBuild(commands.Cog):
                 origin=origin,
                 offset=offset,
                 scale=overall_scale,
-                spacing=object_spacing
+                spacing=object_spacing,
+                ypr_override=ypr_override
             )
         except ValueError as e:
             await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
@@ -110,7 +122,8 @@ class SignBuild(commands.Cog):
                 f"Sign Size: {len(matrix[0])}x{len(matrix)}\n"
                 f"Total Objects: {len(objects)}\n"
                 f"Object Used: {OBJECT_CLASS_MAP.get(obj_type, obj_type)}\n"
-                f"Scale: {overall_scale} | Spacing: {object_spacing}"
+                f"Scale: {overall_scale} | Spacing: {object_spacing}\n"
+                f"Orientation: {orientation.value if orientation else 'upright'}"
             ),
             export_mode="json"
         )
@@ -130,6 +143,7 @@ class SignBuild(commands.Cog):
                 f"• Objects: {len(objects)}\n"
                 f"• Type: `{OBJECT_CLASS_MAP.get(obj_type, obj_type)}`\n"
                 f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`\n"
+                f"• Orientation: `{orientation.value if orientation else 'upright'}`\n"
                 f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
             ),
             files=[
