@@ -32,8 +32,8 @@ MAX_OBJECTS = 1200
 # ✅ Select YPR array based on mode
 def resolve_ypr(mode: str) -> list:
     if mode == "flat":
-        return [0.0, 0.0, 90.0]  # flat on ground
-    return [0.0, 90.0, 0.0]      # upright stacking default
+        return [0.0, 0.0, 0.0]  # Flat on ground, no roll
+    return [0.0, 90.0, 180.0]  # Upright: Face correct direction, fix backward+flip
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
