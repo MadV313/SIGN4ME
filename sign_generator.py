@@ -48,7 +48,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     objects = []
 
     for row in range(rows):
-        for col in reversed(range(cols)):
+        for col in range(cols):  # 🔁 FIXED: Removed reversed()
             if matrix[row][col] != "#":
                 continue
 
