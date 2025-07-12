@@ -29,9 +29,10 @@ OBJECT_SIZE_ADJUSTMENTS = {
 MAX_OBJECTS = 950  # ⛔ Optional cap to avoid CE lag/crash
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None) -> list:
+    # Ensure valid object type and resolve to real classname
     if object_type not in OBJECT_CLASS_MAP:
-        raise ValueError(f"❌ Unrecognized object type: '{object_type}'. Make sure it matches one of: {list(OBJECT_CLASS_MAP.keys())}")
-    
+        raise ValueError(f"❌ Unrecognized object type: '{object_type}'. Must be one of: {list(OBJECT_CLASS_MAP.keys())}")
+
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
