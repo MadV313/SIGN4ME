@@ -64,7 +64,7 @@ class SignAdjustPanelView(discord.ui.View):
         spacing = self.config.get("custom_spacing", {}).get(obj, OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
         scale = self.config.get("custom_scale", {}).get(obj, self.config.get("defaultScale", 0.5))
         origin = self.config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
-        ypr_mode = self.config.get("ypr_override", "upright")
+        upright = self.config.get("upright_mode", True)
 
         embed = discord.Embed(title="🔧 Adjust Sign Settings", color=0x2ECC71)
         embed.add_field(name="Object Type", value=f"`{label}`", inline=True)
@@ -75,11 +75,7 @@ class SignAdjustPanelView(discord.ui.View):
             value=f"`X: {origin['x']}, Z: {origin['y']}`",
             inline=False
         )
-        embed.add_field(
-            name="Orientation",
-            value=f"`{'Upright (0,90,0)' if ypr_mode == 'upright' else 'Flat (0,0,90)'}`",
-            inline=True
-        )
+        embed.add_field(name="Placement Mode", value="`Upright`" if upright else "`Flat`", inline=True)
         embed.add_field(
             name="⚠️ Placement Warning",
             value="Ensure scale/spacing is appropriate to avoid overlap or huge distances in-game.",
@@ -89,6 +85,13 @@ class SignAdjustPanelView(discord.ui.View):
 
     async def interaction_check(self, interaction: discord.Interaction):
         return is_admin_user(interaction)
+
+    @discord.ui.button(label="🔄 Toggle Placement Mode", style=discord.ButtonStyle.secondary)
+    async def toggle_upright(self, interaction: discord.Interaction, button: discord.ui.Button):
+        current = self.config.get("upright_mode", True)
+        self.config["upright_mode"] = not current
+        update_guild_config(self.guild_id, self.config)
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
     @discord.ui.button(label="🧱 Adjust Object", style=discord.ButtonStyle.secondary)
     async def adjust_object(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -109,12 +112,17 @@ class SignAdjustPanelView(discord.ui.View):
             if self.message:
                 await self.message.edit(embed=self.build_embed(), view=self)
 
-            try: await i.message.delete()
-            except: pass
+            try:
+                await i.message.delete()
+            except:
+                pass
+
+            await asyncio.sleep(2)
             try:
                 followup = await confirm
                 await followup.delete()
-            except: pass
+            except:
+                pass
 
         select.callback = callback
         await interaction.response.send_message("🔄 Choose object:", view=view, ephemeral=True)
@@ -135,22 +143,16 @@ class SignAdjustPanelView(discord.ui.View):
     async def adjust_offset(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(AdjustOffsetModal(self))
 
-    @discord.ui.button(label="🧭 Toggle YPR Orientation", style=discord.ButtonStyle.secondary)
-    async def toggle_ypr(self, interaction: discord.Interaction, button: discord.ui.Button):
-        current = self.config.get("ypr_override", "upright")
-        new_value = "flat" if current == "upright" else "upright"
-        self.config["ypr_override"] = new_value
-        update_guild_config(self.guild_id, self.config)
-        await interaction.response.edit_message(embed=self.build_embed(), view=self)
-
     @discord.ui.button(label="✅ Approve + Rebuild", style=discord.ButtonStyle.green)
     async def approve_and_rebuild(self, interaction: discord.Interaction, button: discord.ui.Button):
         if "last_sign_data" not in self.config:
             await interaction.response.send_message("⚠️ No previous sign data found. Use `/signbuild` first.", ephemeral=True)
             return
         if self.message:
-            try: await self.message.delete()
-            except: pass
+            try:
+                await self.message.delete()
+            except:
+                pass
         await interaction.response.defer(ephemeral=True)
         await handle_sign_rebuild(interaction, self.config, self.guild_id)
 
