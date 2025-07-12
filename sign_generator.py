@@ -26,12 +26,14 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "BoxWooden": 1.0
 }
 
+# ✅ Max object cap — enforced inside loop
 MAX_OBJECTS = 1200
 
+# ✅ Select YPR array based on mode
 def resolve_ypr(mode: str) -> list:
-    if mode == "upright":
-        return [0.0, 0.0, 90.0]  # billboard upright (rotated flat side forward)
-    return [0.0, 0.0, 0.0]      # flat on ground
+    if mode == "flat":
+        return [0.0, 0.0, 90.0]  # flat on ground
+    return [0.0, 90.0, 0.0]      # upright stacking default
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
@@ -44,6 +46,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     rows = len(matrix)
     cols = len(matrix[0])
 
+    # ✅ Proper origin offset (centered)
     origin_x = origin.get("x", 0.0)
     origin_y = origin.get("y", 0.0)
     origin_z = origin.get("z", 0.0)
@@ -55,14 +58,18 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     objects = []
 
     for row in range(rows):
-        for col in range(cols):
+        for col in range(cols):  # ✅ Left to right logic (horizontal orientation)
             if matrix[row][col] != "#":
                 continue
 
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
 
-            obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # ✅ always [x, y, z]
+            # ✅ Correct position based on orientation
+            if ypr_mode == "upright":
+                obj_pos = [round(pos_x, 4), round(pos_z, 4), round(base_y, 4)]  # stack vertically (Z → Y)
+            else:
+                obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # flat on ground
 
             obj = {
                 "name": resolved_type,
@@ -99,7 +106,7 @@ if __name__ == "__main__":
         CONFIG.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
         CONFIG.get("defaultScale", 0.5),
         CONFIG.get("defaultSpacing", 1.0),
-        ypr_mode=CONFIG.get("yprMode", "upright")
+        ypr_mode=CONFIG.get("yprMode", "upright")  # Default = upright stacking
     )
     save_object_json(obj_list, CONFIG["object_output_path"])
     print(f"✅ Generated {len(obj_list)} sign objects.")
