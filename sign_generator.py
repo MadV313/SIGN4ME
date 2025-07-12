@@ -39,6 +39,9 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     if object_type not in OBJECT_CLASS_MAP:
         raise ValueError(f"❌ Unrecognized object type: '{object_type}'. Must be one of: {list(OBJECT_CLASS_MAP.keys())}")
 
+    # ✅ Flip matrix both vertically and horizontally to correct render direction
+    matrix = [row[::-1] for row in matrix[::-1]]
+
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
     ypr = resolve_ypr(ypr_mode)
@@ -99,6 +102,8 @@ if __name__ == "__main__":
 
     test_text = "SIGN4ME"
     matrix = generate_letter_matrix(test_text)
+    # ✅ Apply flip for test context too
+    matrix = [row[::-1] for row in matrix[::-1]]
     obj_list = letter_to_object_list(
         matrix,
         CONFIG["default_object"],
