@@ -69,7 +69,7 @@ class SignBuild(commands.Cog):
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
         # ✅ Step 1: Generate character matrix
-        matrix = generate_letter_matrix(text.upper())
+        matrix = [row[::-1] for row in generate_letter_matrix(text.upper())[::-1]]
 
         if not matrix or not any('#' in row for row in matrix):
             await interaction.followup.send("⚠️ No valid characters detected. Please use capital A–Z letters only.", ephemeral=True)
