@@ -28,14 +28,20 @@ OBJECT_SIZE_ADJUSTMENTS = {
 
 MAX_OBJECTS = 1200  # 🔼 Increased cap to allow larger signs
 
-def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr: list = None) -> list:
+# ✅ New helper for YPR mode selection
+def resolve_ypr(mode: str) -> list:
+    if mode == "flat":
+        return [0.0, 0.0, 90.0]
+    return [0.0, 90.0, 0.0]  # Default: upright
+
+def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     # Ensure valid object type and resolve to real classname
     if object_type not in OBJECT_CLASS_MAP:
         raise ValueError(f"❌ Unrecognized object type: '{object_type}'. Must be one of: {list(OBJECT_CLASS_MAP.keys())}")
 
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
-    ypr = ypr or [0.0, 90.0, 0.0]  # 🔁 Default upright if not overridden
+    ypr = resolve_ypr(ypr_mode)
 
     rows = len(matrix)
     cols = len(matrix[0])
@@ -48,7 +54,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     objects = []
 
     for row in range(rows):
-        for col in range(cols):  # 🔁 FIXED: Removed reversed()
+        for col in range(cols):  # 🔁 Text now left to right
             if matrix[row][col] != "#":
                 continue
 
@@ -89,7 +95,7 @@ if __name__ == "__main__":
         CONFIG.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
         CONFIG.get("defaultScale", 0.5),
         CONFIG.get("defaultSpacing", 1.0),
-        ypr=[0.0, 90.0, 0.0]  # ✅ Test upright
+        ypr_mode=CONFIG.get("yprMode", "upright")  # ✅ Configurable: "upright" or "flat"
     )
     save_object_json(obj_list, CONFIG["object_output_path"])
     print(f"✅ Generated {len(obj_list)} sign objects.")
