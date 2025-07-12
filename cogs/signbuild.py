@@ -4,29 +4,15 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import os
+import json
 
 from utils.config_utils import get_guild_config, save_guild_config
 from logic.text_matrix import generate_letter_matrix
 from logic.render_sign_preview import render_sign_preview
+from logic.sign_generator import letter_to_object_list, OBJECT_CLASS_MAP
 from sign_packager import create_sign_zip
 from utils.channel_utils import get_channel_id
 from utils.permissions import is_admin_user
-
-def letter_to_object_list(matrix, object_type, origin, offset, scale=0.5, spacing=1.0):
-    objects = []
-    for y, row in enumerate(matrix):
-        for x, cell in enumerate(row):
-            if cell != "#":
-                continue
-            pos_x = origin["x"] + offset["x"] + (x * spacing * scale)
-            pos_y = origin["y"] + offset["y"]
-            pos_z = origin["z"] + offset["z"] + (y * spacing * scale)
-            objects.append({
-                "name": object_type,
-                "pos": [round(pos_x, 2), round(pos_y, 2), round(pos_z, 2)],
-                "ypr": [0, 0, 0]
-            })
-    return objects
 
 class SignBuild(commands.Cog):
     def __init__(self, bot):
@@ -67,27 +53,31 @@ class SignBuild(commands.Cog):
         guild_id = str(interaction.guild.id)
         config = get_guild_config(guild_id)
         obj_type = object_type.value
+
         origin = config.get("origin_position", {"x": 0.0, "y": 0.0, "z": 0.0})
         offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
 
-        # Use overrides or fallback config values
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
-        # Step 1: Generate matrix from letter map
+        # ✅ Step 1: Generate matrix
         matrix = generate_letter_matrix(text)
 
-        # Step 2: Convert matrix to object list
-        objects = letter_to_object_list(
-            matrix,
-            obj_type,
-            origin,
-            offset,
-            scale=overall_scale,
-            spacing=object_spacing
-        )
+        # ✅ Step 2: Convert to actual object class name
+        try:
+            objects = letter_to_object_list(
+                matrix=matrix,
+                object_type=obj_type,
+                origin=origin,
+                offset=offset,
+                scale=overall_scale,
+                spacing=object_spacing
+            )
+        except ValueError as e:
+            await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
+            return
 
-        # Step 3: Save object layout JSON
+        # ✅ Step 3: Save JSON + preview path
         output_json_path = os.path.join("outputs", "Sign4ME.json")
         preview_path = os.path.join("previews", "sign_preview.png")
 
@@ -95,13 +85,12 @@ class SignBuild(commands.Cog):
         os.makedirs("previews", exist_ok=True)
 
         with open(output_json_path, "w") as f:
-            import json
-            json.dump(objects, f, indent=2)
+            json.dump({"Objects": objects}, f, indent=2)
 
-        # Step 4: Render preview image
+        # ✅ Step 4: Render preview
         render_sign_preview(matrix, preview_path, object_type=obj_type)
 
-        # Step 5: Update and save config
+        # ✅ Step 5: Update + save guild config
         config["default_object"] = obj_type
         config["defaultScale"] = overall_scale
         config["defaultSpacing"] = object_spacing
@@ -112,7 +101,7 @@ class SignBuild(commands.Cog):
         config["preview_output_path"] = preview_path
         save_guild_config(guild_id, config)
 
-        # Step 6: Create .zip bundle (JSON + PNG)
+        # ✅ Step 6: Create .zip
         final_path = create_sign_zip(
             output_json_path,
             preview_path,
@@ -120,13 +109,13 @@ class SignBuild(commands.Cog):
             extra_text=(
                 f"Sign Size: {len(matrix[0])}x{len(matrix)}\n"
                 f"Total Objects: {len(objects)}\n"
-                f"Object Used: {obj_type}\n"
+                f"Object Used: {OBJECT_CLASS_MAP.get(obj_type, obj_type)}\n"
                 f"Scale: {overall_scale} | Spacing: {object_spacing}"
             ),
             export_mode="json"
         )
 
-        # Step 7: Post to gallery
+        # ✅ Step 7: Post to gallery/log/admin channel
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
@@ -139,7 +128,7 @@ class SignBuild(commands.Cog):
                 f"🪧 **Sign Build Complete**\n"
                 f"• Size: {len(matrix[0])}x{len(matrix)}\n"
                 f"• Objects: {len(objects)}\n"
-                f"• Type: `{obj_type}`\n"
+                f"• Type: `{OBJECT_CLASS_MAP.get(obj_type, obj_type)}`\n"
                 f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`\n"
                 f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
             ),
