@@ -30,7 +30,7 @@ MAX_OBJECTS = 1200
 
 def resolve_ypr(mode: str) -> list:
     if mode == "upright":
-        return [0.0, 0.0, 90.0]  # billboard upright
+        return [0.0, 0.0, 90.0]  # billboard upright (rotated flat side forward)
     return [0.0, 0.0, 0.0]      # flat on ground
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
@@ -62,10 +62,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
 
-            if ypr_mode == "upright":
-                obj_pos = [round(pos_x, 4), round(pos_z, 4), round(base_y, 4)]  # billboard logic: y is Z
-            else:
-                obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # flat: y stays y
+            obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # ✅ always [x, y, z]
 
             obj = {
                 "name": resolved_type,
