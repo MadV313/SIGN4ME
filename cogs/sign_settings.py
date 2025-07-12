@@ -9,7 +9,7 @@ from utils.config_utils import get_guild_config, update_guild_config
 from utils.permissions import is_admin_user
 from logic.text_matrix import generate_letter_matrix
 from logic.render_sign_preview import render_sign_preview
-from zip_packager import create_qr_zip
+from sign_packager import create_sign_zip
 from utils.channel_utils import get_channel_id
 
 OBJECT_SIZE_ADJUSTMENTS = {
