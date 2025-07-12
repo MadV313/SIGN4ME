@@ -72,8 +72,8 @@ class SignAdjustPanelView(discord.ui.View):
         embed.add_field(name="Spacing", value=f"`{spacing}`", inline=True)
         embed.add_field(name="Scale", value=f"`{scale}`", inline=True)
         embed.add_field(
-            name="Origin (User Input)",
-            value=f"`X: {origin['x']}, Z: {origin['y']}`",
+            name="Origin Coordinates",
+            value=f"`X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}`",
             inline=False
         )
         embed.add_field(name="Placement Mode", value="`Upright`" if upright else "`Flat`", inline=True)
@@ -199,16 +199,17 @@ class AdjustOriginModal(discord.ui.Modal, title="Set Origin Coordinates"):
         super().__init__()
         self.view = view
         origin = view.config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
+        # 🛠 FIX LABELS TO MATCH INTERNAL STRUCTURE
         self.add_item(discord.ui.TextInput(label="Origin X", default=str(origin["x"]), required=True))
-        self.add_item(discord.ui.TextInput(label="Origin Z (Depth)", default=str(origin["y"]), required=True))
-        self.add_item(discord.ui.TextInput(label="Height (Y)", default=str(origin["z"]), required=True))
+        self.add_item(discord.ui.TextInput(label="Depth (Z)", default=str(origin["z"]), required=True))  # was origin["y"]
+        self.add_item(discord.ui.TextInput(label="Height (Y)", default=str(origin["y"]), required=True)) # was origin["z"]
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
             x = float(self.children[0].value)
-            z = float(self.children[1].value)
-            y = float(self.children[2].value)
-            self.view.config["origin_position"] = {"x": x, "y": z, "z": y}
+            z = float(self.children[1].value)  # Now `z` is assigned to key `"z"`
+            y = float(self.children[2].value)  # Now `y` is assigned to key `"y"`
+            self.view.config["origin_position"] = {"x": x, "y": y, "z": z}
             update_guild_config(self.view.guild_id, self.view.config)
             await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
         except ValueError:
