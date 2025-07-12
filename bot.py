@@ -32,7 +32,7 @@ async def main():
         return
     with open(TOKEN_PATH, "r") as f:
         config = json.load(f)
-    token = config.get("token")
+    token = os.environ.get("DISCORD_TOKEN")
     if not token:
         print("❌ Bot token missing in config.json")
         return
