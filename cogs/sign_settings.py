@@ -12,6 +12,7 @@ from logic.text_matrix import generate_letter_matrix
 from logic.render_sign_preview import render_sign_preview
 from sign_packager import create_sign_zip
 from utils.channel_utils import get_channel_id
+from sign_generator import letter_to_object_list
 
 OBJECT_SIZE_ADJUSTMENTS = {
     "Armband_Black": 0.5,
@@ -236,22 +237,29 @@ class AdjustOffsetModal(discord.ui.Modal, title="Set Origin Offset"):
 # ─────────────── Rebuild Logic ───────────────
 
 async def handle_sign_rebuild(interaction: discord.Interaction, config: dict, guild_id: str):
-    from logic.text_matrix import generate_letter_matrix
-    from logic.render_sign_preview import render_sign_preview
-
     text = config["last_sign_data"]
     obj = config.get("default_object", "WoodenCrate")
     scale = config.get("custom_scale", {}).get(obj, config.get("defaultScale", 0.5))
     spacing = config.get("custom_spacing", {}).get(obj, config.get("defaultSpacing", 1.0))
     origin = config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
     offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
+    upright = config.get("upright_mode", True)
+
+    ypr_override = [0.0, 90.0, 0.0] if upright else [0.0, 0.0, 90.0]
 
     matrix = generate_letter_matrix(text)
-    from cogs.signbuild import letter_to_object_list
-    objects = letter_to_object_list(matrix, obj, origin, offset, scale=scale, spacing=spacing)
+    objects = letter_to_object_list(
+        matrix=matrix,
+        object_type=obj,
+        origin=origin,
+        offset=offset,
+        scale=scale,
+        spacing=spacing,
+        ypr_override=ypr_override
+    )
 
     with open(config["object_output_path"], "w") as f:
-        json.dump(objects, f, indent=2)
+        json.dump({"Objects": objects}, f, indent=2)
 
     render_sign_preview(matrix, config["preview_output_path"], object_type=obj)
 
