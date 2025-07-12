@@ -47,20 +47,20 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     objects = []
 
     for row in range(rows):
-        for col in range(cols):
+        for col in reversed(range(cols)):
             if matrix[row][col] != "#":
                 continue
-
+    
             base_x = offset_x + (col * spacing)
             base_z = offset_z + (row * spacing)
-
+    
             if len(objects) >= MAX_OBJECTS:
                 return objects
-
+    
             obj = {
                 "name": resolved_type,
                 "pos": [base_x, top_y, base_z],
-                "ypr": [0.0, 0.0, 90.0],
+                "ypr": [0.0, 90.0, 0.0],  # 🔁 Stand upright
                 "scale": scale,
                 "enableCEPersistency": 0,
                 "customString": ""
