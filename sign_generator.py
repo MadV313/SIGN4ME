@@ -3,7 +3,7 @@
 import os
 import json
 
-# ✅ In-game object class mapping
+# ✅ In-game object class mapping (value = in-game classname)
 OBJECT_CLASS_MAP = {
     "ImprovisedContainer": "Land_Container_1Mo",
     "SmallProtectiveCase": "SmallProtectorCase",
@@ -14,7 +14,7 @@ OBJECT_CLASS_MAP = {
     "JerryCan": "CanisterGasoline"
 }
 
-# ✅ Size tweaks per object (for spacing calculations)
+# ✅ Size tweaks per object (for spacing calculation)
 OBJECT_SIZE_ADJUSTMENTS = {
     "SmallProtectiveCase": 1.0,
     "SmallProtectorCase": 1.0,
@@ -26,16 +26,16 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "BoxWooden": 1.0
 }
 
-MAX_OBJECTS = 1200  # 🔼 Increased cap to allow larger signs
+# ✅ Max object cap — enforced inside loop
+MAX_OBJECTS = 1200
 
-# ✅ New helper for YPR mode selection
+# ✅ Select YPR array based on mode
 def resolve_ypr(mode: str) -> list:
     if mode == "flat":
-        return [0.0, 0.0, 90.0]
-    return [0.0, 90.0, 0.0]  # Default: upright
+        return [0.0, 0.0, 90.0]  # flat on ground
+    return [0.0, 90.0, 0.0]      # upright stacking default
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
-    # Ensure valid object type and resolve to real classname
     if object_type not in OBJECT_CLASS_MAP:
         raise ValueError(f"❌ Unrecognized object type: '{object_type}'. Must be one of: {list(OBJECT_CLASS_MAP.keys())}")
 
@@ -46,33 +46,38 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     rows = len(matrix)
     cols = len(matrix[0])
 
-    # Centered placement math
-    offset_x = round(origin["x"] - ((cols // 2) * spacing) + offset.get("x", 0), 4)
-    offset_z = round(origin["z"] - ((rows // 2) * spacing) + offset.get("z", 0), 4)
-    top_y = origin["y"] + offset.get("y", 0.0)
+    # ✅ Proper origin offset (centered)
+    origin_x = origin.get("x", 0.0)
+    origin_y = origin.get("y", 0.0)
+    origin_z = origin.get("z", 0.0)
+
+    offset_x = round(origin_x - ((cols // 2) * spacing) + offset.get("x", 0.0), 4)
+    offset_z = round(origin_z - ((rows // 2) * spacing) + offset.get("z", 0.0), 4)
+    base_y = origin_y + offset.get("y", 0.0)
 
     objects = []
 
     for row in range(rows):
-        for col in range(cols):  # 🔁 Text now left to right
+        for col in range(cols):  # ✅ Left to right logic (horizontal orientation)
             if matrix[row][col] != "#":
                 continue
 
-            base_x = offset_x + (col * spacing)
-            base_z = offset_z + (row * spacing)
-
-            if len(objects) >= MAX_OBJECTS:
-                return objects
+            pos_x = offset_x + (col * spacing)
+            pos_z = offset_z + (row * spacing)
 
             obj = {
                 "name": resolved_type,
-                "pos": [base_x, top_y, base_z],
+                "pos": [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)],
                 "ypr": ypr,
                 "scale": scale,
                 "enableCEPersistency": 0,
                 "customString": ""
             }
+
             objects.append(obj)
+
+            if len(objects) >= MAX_OBJECTS:
+                return objects
 
     return objects
 
@@ -81,7 +86,7 @@ def save_object_json(object_list: list, output_path: str):
     with open(output_path, "w") as f:
         json.dump({"Objects": object_list}, f, indent=2)
 
-# ✅ Manual test
+# ✅ Manual test hook
 if __name__ == "__main__":
     from config import CONFIG
     from text_matrix import generate_letter_matrix
@@ -95,7 +100,7 @@ if __name__ == "__main__":
         CONFIG.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
         CONFIG.get("defaultScale", 0.5),
         CONFIG.get("defaultSpacing", 1.0),
-        ypr_mode=CONFIG.get("yprMode", "upright")  # ✅ Configurable: "upright" or "flat"
+        ypr_mode=CONFIG.get("yprMode", "upright")  # Default = upright stacking
     )
     save_object_json(obj_list, CONFIG["object_output_path"])
     print(f"✅ Generated {len(obj_list)} sign objects.")
