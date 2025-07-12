@@ -3,4 +3,3 @@ Pillow
 python-dotenv
 opencv-python-headless
 pyzbar
-pip install
