@@ -65,11 +65,11 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
 
-            # ✅ Correct position based on orientation
+            # ✅ Always output [X, Z, Y] regardless of stacking mode
             if ypr_mode == "upright":
-                obj_pos = [round(pos_x, 4), round(pos_z, 4), round(base_y, 4)]  # stack vertically (Z → Y)
+                obj_pos = [round(pos_x, 4), round(pos_z, 4), round(base_y, 4)]  # ✅ Z = forward, Y = vertical
             else:
-                obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # flat on ground
+                obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # Flat signs still use same logic
 
             obj = {
                 "name": resolved_type,
