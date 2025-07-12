@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import asyncio
+import json
 
 from utils.config_utils import get_guild_config, update_guild_config
 from utils.permissions import is_admin_user
@@ -21,6 +22,17 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "ImprovisedContainer": 1.0,
     "DryBag_Black": 1.25
 }
+
+OBJECT_NAME_TO_LABEL = {
+    "Armband_Black": "Armband (Black)",
+    "JerryCan": "Jerry Can",
+    "BoxWooden": "Wooden Box",
+    "SmallProtectiveCase": "Protective Case (Small)",
+    "WoodenCrate": "Wooden Crate",
+    "ImprovisedContainer": "Improvised Container",
+    "DryBag_Black": "Dry Bag (Black)"
+}
+LABEL_TO_OBJECT_NAME = {v: k for k, v in OBJECT_NAME_TO_LABEL.items()}
 
 class SignSettings(commands.Cog):
     def __init__(self, bot):
@@ -48,12 +60,13 @@ class SignAdjustPanelView(discord.ui.View):
 
     def build_embed(self):
         obj = self.config.get("default_object", "WoodenCrate")
+        label = OBJECT_NAME_TO_LABEL.get(obj, obj)
         spacing = self.config.get("custom_spacing", {}).get(obj, OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
         scale = self.config.get("custom_scale", {}).get(obj, self.config.get("defaultScale", 0.5))
         origin = self.config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
 
         embed = discord.Embed(title="🔧 Adjust Sign Settings", color=0x2ECC71)
-        embed.add_field(name="Object Type", value=f"`{obj}`", inline=True)
+        embed.add_field(name="Object Type", value=f"`{label}`", inline=True)
         embed.add_field(name="Spacing", value=f"`{spacing}`", inline=True)
         embed.add_field(name="Scale", value=f"`{scale}`", inline=True)
         embed.add_field(
@@ -74,7 +87,7 @@ class SignAdjustPanelView(discord.ui.View):
     @discord.ui.button(label="🧱 Adjust Object", style=discord.ButtonStyle.secondary)
     async def adjust_object(self, interaction: discord.Interaction, button: discord.ui.Button):
         options = [
-            discord.SelectOption(label=obj, value=obj)
+            discord.SelectOption(label=OBJECT_NAME_TO_LABEL[obj], value=obj)
             for obj in OBJECT_SIZE_ADJUSTMENTS.keys()
         ]
         select = discord.ui.Select(placeholder="Select object", options=options)
@@ -86,7 +99,7 @@ class SignAdjustPanelView(discord.ui.View):
             self.config["default_object"] = selected
             update_guild_config(self.guild_id, self.config)
 
-            confirm = await i.response.send_message(f"✅ Object changed to `{selected}`", ephemeral=True)
+            confirm = await i.response.send_message(f"✅ Object changed to `{OBJECT_NAME_TO_LABEL.get(selected, selected)}`", ephemeral=True)
             if self.message:
                 await self.message.edit(embed=self.build_embed(), view=self)
 
@@ -216,7 +229,6 @@ class AdjustOffsetModal(discord.ui.Modal, title="Set Origin Offset"):
 async def handle_sign_rebuild(interaction: discord.Interaction, config: dict, guild_id: str):
     from logic.text_matrix import generate_letter_matrix
     from logic.render_sign_preview import render_sign_preview
-    import json
 
     text = config["last_sign_data"]
     obj = config.get("default_object", "WoodenCrate")
