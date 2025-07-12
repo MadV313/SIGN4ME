@@ -25,18 +25,18 @@ class SetOrigin(commands.Cog):
         guild_id = str(interaction.guild.id)
         config = get_guild_config(guild_id)
 
-        # ✅ Apply upright stacking logic: swap Z ➝ Y and Y ➝ Z
+        # ✅ Internal YPR stacking swap: Z ➝ Y, Y ➝ Z
         config["origin_position"] = {
             "x": x,
-            "y": z,  # Depth (Z) becomes height (Y)
-            "z": y   # Height (Y) becomes depth (Z)
+            "y": z,  # z becomes vertical height (Y axis in DayZ world)
+            "z": y   # y becomes forward depth (Z axis)
         }
 
         save_guild_config(guild_id, config)
 
         await interaction.response.send_message(
             f"📍 **New origin position set for this server:**\n"
-            f"> `X`: {x}\n> `Z`: {z} (Depth)\n> `Height`: {y}",
+            f"> `X`: {x}\n> `Z`: {z} (Depth → becomes Height)\n> `Height`: {y} (Height → becomes Depth)",
             ephemeral=True
         )
 
