@@ -75,6 +75,15 @@ class SignBuild(commands.Cog):
             await interaction.followup.send("⚠️ No valid characters detected. Please use capital A–Z letters only.", ephemeral=True)
             return
 
+        # 🔄 Adjust origin logic for upright mode (Z→Y stacking)
+        ypr_mode = orientation.value if orientation else "upright"
+        if ypr_mode == "upright":
+            origin = {
+                "x": origin["x"],
+                "y": origin["z"],  # Z becomes new Y
+                "z": origin["y"]   # Y becomes Z for display
+            }
+
         # ✅ Step 2: Generate objects from matrix using internal YPR mode
         try:
             objects = letter_to_object_list(
@@ -84,8 +93,9 @@ class SignBuild(commands.Cog):
                 offset=offset,
                 scale=overall_scale,
                 spacing=object_spacing,
-                ypr_mode=orientation.value if orientation else "upright"
+                ypr_mode=ypr_mode
             )
+
         except ValueError as e:
             await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
             return
