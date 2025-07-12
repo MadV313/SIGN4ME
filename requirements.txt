@@ -1,4 +1,6 @@
 discord.py>=2.3.2
-pillow>=10.3.0
-
-
+qrcode
+Pillow
+python-dotenv
+opencv-python-headless
+pyzbar
