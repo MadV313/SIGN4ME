@@ -80,8 +80,8 @@ class SignBuild(commands.Cog):
         if ypr_mode == "upright":
             origin = {
                 "x": origin["x"],
-                "y": origin["z"],  # Z becomes new Y
-                "z": origin["y"]   # Y becomes Z for display
+                "y": origin["y"],  # ✅ correct: Y stays Y
+                "z": origin["z"]   # ✅ correct: Z stays Z
             }
 
         # ✅ Step 2: Generate objects from matrix using internal YPR mode
