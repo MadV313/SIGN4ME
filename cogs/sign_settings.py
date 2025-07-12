@@ -246,7 +246,7 @@ async def handle_sign_rebuild(interaction: discord.Interaction, config: dict, gu
     offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
     upright = config.get("upright_mode", True)
 
-    ypr_override = [0.0, 90.0, 0.0] if upright else [0.0, 0.0, 90.0]
+    ypr_mode = "upright" if upright else "flat"
 
     matrix = generate_letter_matrix(text)
     objects = letter_to_object_list(
@@ -256,7 +256,7 @@ async def handle_sign_rebuild(interaction: discord.Interaction, config: dict, gu
         offset=offset,
         scale=scale,
         spacing=spacing,
-        ypr_override=ypr_override
+        ypr_mode=ypr_mode
     )
 
     with open(config["object_output_path"], "w") as f:
