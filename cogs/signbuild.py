@@ -9,7 +9,7 @@ import json
 from utils.config_utils import get_guild_config, save_guild_config
 from logic.text_matrix import generate_letter_matrix
 from logic.render_sign_preview import render_sign_preview
-from logic.sign_generator import letter_to_object_list, OBJECT_CLASS_MAP
+from sign_generator import letter_to_object_list, OBJECT_CLASS_MAP
 from sign_packager import create_sign_zip
 from utils.channel_utils import get_channel_id
 from utils.permissions import is_admin_user
