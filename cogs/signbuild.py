@@ -70,18 +70,18 @@ class SignBuild(commands.Cog):
 
         # ✅ Step 1: Generate and flip character matrix
         matrix = [row[::-1] for row in generate_letter_matrix(text.upper())[::-1]]
-
+        
         if not matrix or not any('#' in row for row in matrix):
             await interaction.followup.send("⚠️ No valid characters detected. Please use capital A–Z letters only.", ephemeral=True)
             return
-
+        
         # 🔄 Adjust origin logic for upright mode (Z→Y stacking)
         ypr_mode = orientation.value if orientation else "upright"
         if ypr_mode == "upright":
             origin = {
                 "x": origin["x"],
-                "y": origin["y"],  # ✅ correct: Y stays Y
-                "z": origin["z"]   # ✅ correct: Z stays Z
+                "y": origin["y"],
+                "z": origin["z"]
             }
 
         # ✅ Step 2: Generate objects from matrix using internal YPR mode
