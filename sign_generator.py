@@ -27,7 +27,7 @@ DEFAULT_YPR = [-178.0899200439453, 0.0, 0.0]
 
 def pad_matrix_rows(matrix: list) -> list:
     max_len = max(len(row) for row in matrix)
-    return [row.ljust(max_len, " ") for row in matrix]
+    return [(row + (" " * (max_len - len(row)))) for row in matrix]
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
@@ -36,10 +36,10 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
-    matrix = pad_matrix_rows(matrix)  # ✅ Ensure full horizontal alignment
+    matrix = pad_matrix_rows(matrix)
 
     rows = len(matrix)
-    cols = len(matrix[0])
+    cols = len(matrix[0]) if rows > 0 else 0
 
     origin_x = origin.get("x", 0.0)
     origin_y = origin.get("y", 0.0)
