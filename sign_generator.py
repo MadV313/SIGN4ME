@@ -53,14 +53,17 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
         for col in range(cols):
             if matrix[row][col] != "#":
                 continue
-
+    
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
-            obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]
-
-            # ✅ Set per-object YPR
+    
+            if ypr_mode == "upright":
+                obj_pos = [round(pos_x, 4), round(pos_z, 4), round(base_y, 4)]  # ✅ CORRECT: X, Z, Y
+            else:
+                obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # X, Y, Z
+    
             ypr = [-179.99, 0.0, 0.0] if ypr_mode == "upright" else [0.0, 0.0, 0.0]
-
+    
             obj = {
                 "name": resolved_type,
                 "pos": obj_pos,
@@ -69,9 +72,9 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
                 "enableCEPersistency": 0,
                 "customString": ""
             }
-
+    
             objects.append(obj)
-
+    
             if len(objects) >= MAX_OBJECTS:
                 return objects
 
