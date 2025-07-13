@@ -13,6 +13,12 @@ def render_sign_preview(matrix, output_path, object_type="WoodenCrate", tile_siz
     icon_img = Image.open(icon_path).convert("RGBA")
     icon_img = icon_img.resize((tile_size, tile_size))
 
+    # ✅ Flip matrix vertically so preview matches in-game Z orientation
+    matrix = matrix[::-1]
+
+    # ❌ Horizontal flip (optional if mirrored text ever occurs visually)
+    # matrix = [row[::-1] for row in matrix]
+
     width = len(matrix[0]) * tile_size
     height = len(matrix) * tile_size
     canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
