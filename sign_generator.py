@@ -64,15 +64,12 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
         for col in range(cols):
             if matrix[row][col] != "#":
                 continue
-    
+
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
 
-            # ✅ Always output [X, Z, Y] regardless of stacking mode
-            if ypr_mode == "upright":
-                obj_pos = [round(pos_x, 4), round(pos_z, 4), round(base_y, 4)]  # ✅ Z = forward, Y = vertical
-            else:
-                obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # Flat signs still use same logic
+            # ✅ Output [X, Y, Z] — correct order for DayZ
+            obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]
 
             obj = {
                 "name": resolved_type,
@@ -102,7 +99,6 @@ if __name__ == "__main__":
 
     test_text = "SIGN4ME"
     matrix = generate_letter_matrix(test_text)
-    # ✅ Apply flip for test context too
     matrix = [row[::-1] for row in matrix[::-1]]
     obj_list = letter_to_object_list(
         matrix,
@@ -111,7 +107,7 @@ if __name__ == "__main__":
         CONFIG.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
         CONFIG.get("defaultScale", 0.5),
         CONFIG.get("defaultSpacing", 1.0),
-        ypr_mode=CONFIG.get("yprMode", "upright")  # Default = upright stacking
+        ypr_mode=CONFIG.get("yprMode", "upright")
     )
     save_object_json(obj_list, CONFIG["object_output_path"])
     print(f"✅ Generated {len(obj_list)} sign objects.")
