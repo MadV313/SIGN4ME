@@ -27,7 +27,7 @@ DEFAULT_YPR = [-178.0899200439453, 0.0, 0.0]
 
 def pad_matrix(matrix: list) -> list:
     max_len = max(len(row) for row in matrix)
-    return [row.ljust(max_len) for row in matrix]
+    return [row + [' '] * (max_len - len(row)) for row in matrix]
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
