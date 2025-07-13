@@ -33,12 +33,14 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
     rows = len(matrix)
-    cols = max(len(row) for row in matrix)  # 🔥 Use widest row length
+    cols = max(len(row) for row in matrix)
 
-    # 🔧 Pad all rows to full width
-    for i in range(rows):
-        if len(matrix[i]) < cols:
-            matrix[i] += [' '] * (cols - len(matrix[i]))
+    # 🔧 Pad rows in-place to match max column width
+    for i, row in enumerate(matrix):
+        if len(row) < cols:
+            pad_amt = cols - len(row)
+            matrix[i] += [' '] * pad_amt
+            print(f"🔧 Padded row {i} with {pad_amt} space(s) to reach {cols} cols")
 
     origin_x = origin.get("x", 0.0)
     origin_y = origin.get("y", 0.0)
