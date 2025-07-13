@@ -60,11 +60,11 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 
     objects = []
 
-    for row in reversed(range(rows)):
-        for col in range(cols):  # ✅ Left to right logic (horizontal orientation)
+    for row in range(rows):
+        for col in range(cols):
             if matrix[row][col] != "#":
                 continue
-
+    
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
 
