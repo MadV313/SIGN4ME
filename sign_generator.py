@@ -47,7 +47,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 
     objects = []
 
-    for row_index, row in enumerate(matrix):
+    for row_index, row in enumerate(matrix[::-1]):
         if not isinstance(row, list) or len(row) != cols:
             continue  # ✅ Skip malformed rows
 
