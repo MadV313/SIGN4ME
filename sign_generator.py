@@ -33,21 +33,23 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
     rows = len(matrix)
-    cols = max(len(row) for row in matrix)
-
     origin_x = origin.get("x", 0.0)
     origin_y = origin.get("y", 0.0)
     origin_z = origin.get("z", 0.0)
 
-    offset_x = round(origin_x - ((cols // 2) * spacing) + offset.get("x", 0.0), 6)
-    offset_z = round(origin_z - ((rows // 2) * spacing) + offset.get("z", 0.0), 6)
     base_y = origin_y + offset.get("y", 0.0)
+    offset_z = round(origin_z - ((rows // 2) * spacing) + offset.get("z", 0.0), 6)
 
     objects = []
 
     for row in range(rows):
         current_row = matrix[row]
-        for col in range(len(current_row)):  # ✅ Only loop actual width of current row
+        row_len = len(current_row)
+
+        # ✅ Per-row centering: calculate offset_x for this row
+        offset_x = round(origin_x - ((row_len // 2) * spacing) + offset.get("x", 0.0), 6)
+
+        for col in range(row_len):
             if current_row[col] != "#":
                 continue
 
