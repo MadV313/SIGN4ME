@@ -25,10 +25,6 @@ OBJECT_SIZE_ADJUSTMENTS = {
 MAX_OBJECTS = 1200
 DEFAULT_YPR = [-178.0899200439453, 0.0, 0.0]
 
-def pad_matrix_rows(matrix: list) -> list:
-    max_len = max(len(row) for row in matrix)
-    return [(row + (" " * (max_len - len(row)))) for row in matrix]
-
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
         raise ValueError(f"❌ Unrecognized object type: '{object_type}'.")
@@ -36,29 +32,28 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
-    matrix = pad_matrix_rows(matrix)
-
     rows = len(matrix)
-    cols = len(matrix[0]) if rows > 0 else 0
-
     origin_x = origin.get("x", 0.0)
     origin_y = origin.get("y", 0.0)
     origin_z = origin.get("z", 0.0)
-    base_y = origin_y + offset.get("y", 0.0)
 
-    offset_x_base = origin_x - ((cols / 2) * spacing) + offset.get("x", 0.0)
-    offset_z_base = origin_z - ((rows / 2) * spacing) + offset.get("z", 0.0)
+    base_y = origin_y + offset.get("y", 0.0)
 
     objects = []
 
     for row in range(rows):
-        for col in range(cols):
-            if matrix[row][col] != "#":
+        current_row = matrix[row]
+        row_len = len(current_row)
+
+        offset_x = round(origin_x - ((row_len / 2) * spacing) + offset.get("x", 0.0), 6)
+        pos_z = round(origin_z - ((rows / 2) * spacing) + (row * spacing) + offset.get("z", 0.0), 6)
+
+        for col in range(row_len):
+            if current_row[col] != "#":
                 continue
 
-            pos_x = round(offset_x_base + (col * spacing), 6)
-            pos_z = round(offset_z_base + (row * spacing), 6)
-            obj_pos = [pos_x, pos_z, round(base_y, 6)]  # XZY
+            pos_x = round(offset_x + (col * spacing), 6)
+            obj_pos = [pos_x, pos_z, round(base_y, 6)]  # XZY order
 
             ypr = DEFAULT_YPR if ypr_mode == "upright" else [0.0, 0.0, 0.0]
 
@@ -77,7 +72,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
         print(f"⚠️ Object cap exceeded: {len(objects)} > {MAX_OBJECTS}")
         raise ValueError("Exceeded object limit.")
 
-    print(f"🧱 Final object count: {len(objects)} from {rows} rows × {cols} cols")
+    print(f"🧱 Final object count: {len(objects)} from {rows} rows × variable cols")
     return objects
 
 def save_object_json(object_list: list, output_path: str):
