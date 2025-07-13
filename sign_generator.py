@@ -23,8 +23,6 @@ OBJECT_SIZE_ADJUSTMENTS = {
 }
 
 MAX_OBJECTS = 1200
-
-# ✅ Clean YPR float values to match QR4ME style
 DEFAULT_YPR = [-178.0899200439453, 0.0, 0.0]
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
@@ -35,7 +33,12 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
     rows = len(matrix)
-    cols = len(matrix[0])
+    cols = max(len(row) for row in matrix)  # 🔥 Use widest row length
+
+    # 🔧 Pad all rows to full width
+    for i in range(rows):
+        if len(matrix[i]) < cols:
+            matrix[i] += [' '] * (cols - len(matrix[i]))
 
     origin_x = origin.get("x", 0.0)
     origin_y = origin.get("y", 0.0)
@@ -47,18 +50,13 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 
     objects = []
 
-    for row_index in range(rows):
-        row = matrix[row_index]
-        if not isinstance(row, list) or len(row) != cols:
-            print(f"❌ Skipping malformed row {row_index}: expected {cols} cols, got {len(row)}")
-            continue
-
+    for row in range(rows):
         for col in range(cols):
-            if row[col] != "#":
+            if matrix[row][col] != "#":
                 continue
 
             pos_x = round(offset_x + (col * spacing), 6)
-            pos_z = round(offset_z + (row_index * spacing), 6)
+            pos_z = round(offset_z + (row * spacing), 6)
 
             obj_pos = [pos_x, pos_z, round(base_y, 6)]  # ✅ XZY
 
@@ -80,7 +78,6 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
         raise ValueError("Exceeded object limit.")
 
     print(f"🧱 Final object count: {len(objects)} from {rows} rows × {cols} cols")
-
     return objects
 
 def save_object_json(object_list: list, output_path: str):
