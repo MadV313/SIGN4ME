@@ -3,7 +3,6 @@
 import os
 import json
 
-# ✅ In-game object class mapping (value = in-game classname)
 OBJECT_CLASS_MAP = {
     "ImprovisedContainer": "Land_Container_1Mo",
     "SmallProtectiveCase": "SmallProtectorCase",
@@ -14,7 +13,6 @@ OBJECT_CLASS_MAP = {
     "JerryCan": "CanisterGasoline"
 }
 
-# ✅ Size tweaks per object (for spacing calculation)
 OBJECT_SIZE_ADJUSTMENTS = {
     "SmallProtectiveCase": 1.0,
     "SmallProtectorCase": 1.0,
@@ -26,30 +24,21 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "BoxWooden": 1.0
 }
 
-# ✅ Max object cap — enforced inside loop
 MAX_OBJECTS = 1200
-
-# ✅ Select YPR array based on mode
-def resolve_ypr(mode: str) -> list:
-    if mode == "flat":
-        return [0.0, 0.0, 0.0]  # Flat on ground, no roll
-    return [-180.0, 0.0, 0.0]  # Upright: Face correct direction, fix backward+flip
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
-        raise ValueError(f"❌ Unrecognized object type: '{object_type}'. Must be one of: {list(OBJECT_CLASS_MAP.keys())}")
+        raise ValueError(f"❌ Unrecognized object type: '{object_type}'.")
 
-    # ✅ Flip matrix both vertically and horizontally to correct render direction
+    # ✅ Flip matrix to fix rendering
     matrix = [row[::-1] for row in matrix[::-1]]
 
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
-    ypr = resolve_ypr(ypr_mode)
 
     rows = len(matrix)
     cols = len(matrix[0])
 
-    # ✅ Proper origin offset (centered)
     origin_x = origin.get("x", 0.0)
     origin_y = origin.get("y", 0.0)
     origin_z = origin.get("z", 0.0)
@@ -67,9 +56,10 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
-
-            # ✅ Output [X, Y, Z] — correct order for DayZ
             obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]
+
+            # ✅ Set per-object YPR
+            ypr = [-179.99, 0.0, 0.0] if ypr_mode == "upright" else [0.0, 0.0, 0.0]
 
             obj = {
                 "name": resolved_type,
@@ -92,7 +82,7 @@ def save_object_json(object_list: list, output_path: str):
     with open(output_path, "w") as f:
         json.dump({"Objects": object_list}, f, indent=2)
 
-# ✅ Manual test hook
+# ✅ Manual test
 if __name__ == "__main__":
     from config import CONFIG
     from text_matrix import generate_letter_matrix
@@ -100,6 +90,7 @@ if __name__ == "__main__":
     test_text = "SIGN4ME"
     matrix = generate_letter_matrix(test_text)
     matrix = [row[::-1] for row in matrix[::-1]]
+
     obj_list = letter_to_object_list(
         matrix,
         CONFIG["default_object"],
