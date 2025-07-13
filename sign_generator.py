@@ -1,7 +1,5 @@
 import os
 import json
-from decimal import Decimal
-from json import JSONEncoder
 
 OBJECT_CLASS_MAP = {
     "ImprovisedContainer": "Land_Container_1Mo",
@@ -26,18 +24,8 @@ OBJECT_SIZE_ADJUSTMENTS = {
 
 MAX_OBJECTS = 1200
 
-# ✅ Use Decimal to lock-in YPR format
-DEFAULT_YPR = [
-    Decimal("-178.0899200439453"),
-    Decimal("0.000000000016678911585188417"),
-    Decimal("0.000002056595349131385")
-]
-
-class FixedFloatEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            return float(obj)
-        return super().default(obj)
+# ✅ Clean YPR float values to match QR4ME style
+DEFAULT_YPR = [-178.0899200439453, 0.0, 0.0]
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
@@ -90,7 +78,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 def save_object_json(object_list: list, output_path: str):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
-        json.dump({"Objects": object_list}, f, indent=2, cls=FixedFloatEncoder)
+        json.dump({"Objects": object_list}, f, indent=2)
 
 # ✅ Manual test
 if __name__ == "__main__":
