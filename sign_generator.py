@@ -47,13 +47,18 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 
     objects = []
 
-    for row in range(rows):
+    for row_index in range(rows):
+        row = matrix[row_index]
+        if not isinstance(row, list) or len(row) != cols:
+            print(f"⚠️ Skipping malformed row {row_index}: Expected {cols} columns, got {len(row)}")
+            continue  # ✅ Prevents rendering cutoffs caused by uneven rows
+
         for col in range(cols):
-            if matrix[row][col] != "#":
+            if row[col] != "#":
                 continue
 
             pos_x = round(offset_x + (col * spacing), 6)
-            pos_z = round(offset_z + (row * spacing), 6)
+            pos_z = round(offset_z + (row_index * spacing), 6)
 
             obj_pos = [pos_x, pos_z, round(base_y, 6)]  # ✅ XZY
 
