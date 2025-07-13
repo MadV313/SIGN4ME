@@ -36,7 +36,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
-    matrix = pad_matrix_rows(matrix)  # ✅ Pad all rows to equal width
+    matrix = pad_matrix_rows(matrix)
 
     rows = len(matrix)
     cols = len(matrix[0])
