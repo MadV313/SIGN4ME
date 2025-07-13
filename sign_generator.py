@@ -70,8 +70,9 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 
             objects.append(obj)
 
-            if len(objects) >= MAX_OBJECTS:
-                return objects
+    # ✅ Truncate only after fully populating the list
+    if len(objects) > MAX_OBJECTS:
+        objects = objects[:MAX_OBJECTS]
 
     return objects
 
