@@ -30,9 +30,6 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     if object_type not in OBJECT_CLASS_MAP:
         raise ValueError(f"❌ Unrecognized object type: '{object_type}'.")
 
-    # ✅ Flip matrix to fix rendering
-    matrix = [row[::-1] for row in matrix[::-1]]
-
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
@@ -50,20 +47,17 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     objects = []
 
     for row in range(rows):
-        for col in range(cols):
+        for col in range(cols):  # Left to right
             if matrix[row][col] != "#":
                 continue
-    
+
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
-    
-            if ypr_mode == "upright":
-                obj_pos = [round(pos_x, 4), round(pos_z, 4), round(base_y, 4)]  # ✅ CORRECT: X, Z, Y
-            else:
-                obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # X, Y, Z
-    
-            ypr = [-179.99, 0.0, 0.0] if ypr_mode == "upright" else [0.0, 0.0, 0.0]
-    
+            obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # X, Y, Z
+
+            # ✅ Fixed upright rotation
+            ypr = [-178.0899200439453, 0.0, 0.0] if ypr_mode == "upright" else [0.0, 0.0, 0.0]
+
             obj = {
                 "name": resolved_type,
                 "pos": obj_pos,
@@ -72,9 +66,9 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
                 "enableCEPersistency": 0,
                 "customString": ""
             }
-    
+
             objects.append(obj)
-    
+
             if len(objects) >= MAX_OBJECTS:
                 return objects
 
@@ -91,8 +85,7 @@ if __name__ == "__main__":
     from text_matrix import generate_letter_matrix
 
     test_text = "SIGN4ME"
-    matrix = generate_letter_matrix(test_text)
-    matrix = [row[::-1] for row in matrix[::-1]]
+    matrix = generate_letter_matrix(test_text)  # Do not flip the matrix
 
     obj_list = letter_to_object_list(
         matrix,
