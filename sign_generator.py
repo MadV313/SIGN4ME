@@ -26,13 +26,9 @@ OBJECT_SIZE_ADJUSTMENTS = {
 
 MAX_OBJECTS = 1200
 
-# ✅ MATCHES WORKING JSON EXACTLY
 DEFAULT_YPR = [-178.0899200439453, 1.6678911585188417e-9, 0.000002056595349131385]
-DEFAULT_SCALE = 0.02999928779900074
 
-def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict,
-                          scale: float = DEFAULT_SCALE, spacing: float = None,
-                          ypr_mode: str = "upright") -> list:
+def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
         raise ValueError(f"❌ Unrecognized object type: '{object_type}'.")
 
@@ -43,11 +39,11 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     cols = len(matrix[0])
 
     origin_x = origin.get("x", 0.0)
-    origin_y = origin.get("y", -1.0)
+    origin_y = origin.get("y", 0.0)
     origin_z = origin.get("z", 0.0)
 
-    offset_x = round(origin_x - ((cols // 2) * spacing) + offset.get("x", 0.0), 4)
-    offset_z = round(origin_z - ((rows // 2) * spacing) + offset.get("z", 0.0), 4)
+    offset_x = round(origin_x - ((cols // 2) * spacing) + offset.get("x", 0.0), 6)
+    offset_z = round(origin_z - ((rows // 2) * spacing) + offset.get("z", 0.0), 6)
     base_y = origin_y + offset.get("y", 0.0)
 
     objects = []
@@ -60,7 +56,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
 
-            obj_pos = [round(pos_x, 6), round(base_y, 6), round(pos_z, 6)]  # ✅ [X, Y, Z]
+            obj_pos = [round(pos_x, 6), round(pos_z, 6), round(base_y, 6)]  # ✅ [X, Z, Y] — DayZ format
             ypr = DEFAULT_YPR if ypr_mode == "upright" else [0.0, 0.0, 0.0]
 
             obj = {
@@ -97,7 +93,7 @@ if __name__ == "__main__":
         CONFIG["default_object"],
         CONFIG["origin_position"],
         CONFIG.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
-        CONFIG.get("defaultScale", DEFAULT_SCALE),
+        CONFIG.get("defaultScale", 0.5),
         CONFIG.get("defaultSpacing", 1.0),
         ypr_mode=CONFIG.get("yprMode", "upright")
     )
