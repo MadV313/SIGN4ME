@@ -1,7 +1,7 @@
-# logic/sign_generator.py — Converts letter matrix into DayZ object list
-
 import os
 import json
+from decimal import Decimal
+from json import JSONEncoder
 
 OBJECT_CLASS_MAP = {
     "ImprovisedContainer": "Land_Container_1Mo",
@@ -26,7 +26,18 @@ OBJECT_SIZE_ADJUSTMENTS = {
 
 MAX_OBJECTS = 1200
 
-DEFAULT_YPR = [-178.0899200439453, 1.6678911585188417e-9, 0.000002056595349131385]
+# ✅ Use Decimal to lock-in YPR format
+DEFAULT_YPR = [
+    Decimal("-178.0899200439453"),
+    Decimal("0.000000000016678911585188417"),
+    Decimal("0.000002056595349131385")
+]
+
+class FixedFloatEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super().default(obj)
 
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
@@ -53,10 +64,11 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
             if matrix[row][col] != "#":
                 continue
 
-            pos_x = offset_x + (col * spacing)
-            pos_z = offset_z + (row * spacing)
+            pos_x = round(offset_x + (col * spacing), 6)
+            pos_z = round(offset_z + (row * spacing), 6)
 
-            obj_pos = [round(pos_x, 6), round(pos_z, 6), round(base_y, 6)]  # ✅ [X, Z, Y] — DayZ format
+            obj_pos = [pos_x, pos_z, round(base_y, 6)]  # ✅ XZY
+
             ypr = DEFAULT_YPR if ypr_mode == "upright" else [0.0, 0.0, 0.0]
 
             obj = {
@@ -78,7 +90,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 def save_object_json(object_list: list, output_path: str):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
-        json.dump({"Objects": object_list}, f, indent=2)
+        json.dump({"Objects": object_list}, f, indent=2, cls=FixedFloatEncoder)
 
 # ✅ Manual test
 if __name__ == "__main__":
