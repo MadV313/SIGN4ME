@@ -25,12 +25,18 @@ OBJECT_SIZE_ADJUSTMENTS = {
 MAX_OBJECTS = 1200
 DEFAULT_YPR = [-178.0899200439453, 0.0, 0.0]
 
+def pad_matrix(matrix: list) -> list:
+    max_len = max(len(row) for row in matrix)
+    return [row.ljust(max_len) for row in matrix]
+
 def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
         raise ValueError(f"❌ Unrecognized object type: '{object_type}'.")
 
     resolved_type = OBJECT_CLASS_MAP[object_type]
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
+
+    matrix = pad_matrix(matrix)  # ✅ Make all rows the same length
 
     rows = len(matrix)
     origin_x = origin.get("x", 0.0)
@@ -72,7 +78,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
         print(f"⚠️ Object cap exceeded: {len(objects)} > {MAX_OBJECTS}")
         raise ValueError("Exceeded object limit.")
 
-    print(f"🧱 Final object count: {len(objects)} from {rows} rows × variable cols")
+    print(f"🧱 Final object count: {len(objects)} from {rows} rows × uniform cols")
     return objects
 
 def save_object_json(object_list: list, output_path: str):
