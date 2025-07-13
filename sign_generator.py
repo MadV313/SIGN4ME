@@ -26,7 +26,13 @@ OBJECT_SIZE_ADJUSTMENTS = {
 
 MAX_OBJECTS = 1200
 
-def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, ypr_mode: str = "upright") -> list:
+# ✅ MATCHES WORKING JSON EXACTLY
+DEFAULT_YPR = [-178.0899200439453, 1.6678911585188417e-9, 0.000002056595349131385]
+DEFAULT_SCALE = 0.02999928779900074
+
+def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict,
+                          scale: float = DEFAULT_SCALE, spacing: float = None,
+                          ypr_mode: str = "upright") -> list:
     if object_type not in OBJECT_CLASS_MAP:
         raise ValueError(f"❌ Unrecognized object type: '{object_type}'.")
 
@@ -37,7 +43,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     cols = len(matrix[0])
 
     origin_x = origin.get("x", 0.0)
-    origin_y = origin.get("y", 0.0)
+    origin_y = origin.get("y", -1.0)
     origin_z = origin.get("z", 0.0)
 
     offset_x = round(origin_x - ((cols // 2) * spacing) + offset.get("x", 0.0), 4)
@@ -47,16 +53,15 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     objects = []
 
     for row in range(rows):
-        for col in range(cols):  # Left to right
+        for col in range(cols):
             if matrix[row][col] != "#":
                 continue
 
             pos_x = offset_x + (col * spacing)
             pos_z = offset_z + (row * spacing)
-            obj_pos = [round(pos_x, 4), round(base_y, 4), round(pos_z, 4)]  # X, Y, Z
 
-            # ✅ Fixed upright rotation
-            ypr = [-178.0899200439453, 0.0, 0.0] if ypr_mode == "upright" else [0.0, 0.0, 0.0]
+            obj_pos = [round(pos_x, 6), round(base_y, 6), round(pos_z, 6)]  # ✅ [X, Y, Z]
+            ypr = DEFAULT_YPR if ypr_mode == "upright" else [0.0, 0.0, 0.0]
 
             obj = {
                 "name": resolved_type,
@@ -85,14 +90,14 @@ if __name__ == "__main__":
     from text_matrix import generate_letter_matrix
 
     test_text = "SIGN4ME"
-    matrix = generate_letter_matrix(test_text)  # Do not flip the matrix
+    matrix = generate_letter_matrix(test_text)
 
     obj_list = letter_to_object_list(
         matrix,
         CONFIG["default_object"],
         CONFIG["origin_position"],
         CONFIG.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
-        CONFIG.get("defaultScale", 0.5),
+        CONFIG.get("defaultScale", DEFAULT_SCALE),
         CONFIG.get("defaultSpacing", 1.0),
         ypr_mode=CONFIG.get("yprMode", "upright")
     )
