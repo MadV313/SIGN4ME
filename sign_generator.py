@@ -38,7 +38,6 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     origin_z = origin.get("z", 0.0)
 
     base_y = origin_y + offset.get("y", 0.0)
-    offset_z = round(origin_z - ((rows // 2) * spacing) + offset.get("z", 0.0), 6)
 
     objects = []
 
@@ -46,17 +45,15 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
         current_row = matrix[row]
         row_len = len(current_row)
 
-        # ✅ Per-row centering: calculate offset_x for this row
-        offset_x = round(origin_x - ((row_len // 2) * spacing) + offset.get("x", 0.0), 6)
+        offset_x = round(origin_x - ((row_len / 2) * spacing) + offset.get("x", 0.0), 6)
+        pos_z = round(origin_z - ((rows / 2) * spacing) + (row * spacing) + offset.get("z", 0.0), 6)
 
         for col in range(row_len):
             if current_row[col] != "#":
                 continue
 
             pos_x = round(offset_x + (col * spacing), 6)
-            pos_z = round(offset_z + (row * spacing), 6)
-
-            obj_pos = [pos_x, pos_z, round(base_y, 6)]  # ✅ XZY
+            obj_pos = [pos_x, pos_z, round(base_y, 6)]  # XZY order
 
             ypr = DEFAULT_YPR if ypr_mode == "upright" else [0.0, 0.0, 0.0]
 
