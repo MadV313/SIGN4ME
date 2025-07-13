@@ -3,7 +3,7 @@ import json
 
 OBJECT_CLASS_MAP = {
     "ImprovisedContainer": "Land_Container_1Mo",
-    "SmallProtectiveCase": "SmallProtectorCase",
+    "SmallProtectiveCase": "SmallProtectiveCase",
     "DryBag_Black": "DryBag_Black",
     "WoodenCrate": "WoodenCrate",
     "BoxWooden": "StaticObj_Misc_BoxWooden",
@@ -13,7 +13,7 @@ OBJECT_CLASS_MAP = {
 
 OBJECT_SIZE_ADJUSTMENTS = {
     "SmallProtectiveCase": 1.0,
-    "SmallProtectorCase": 1.0,
+    "SmallProtectiveCase": 1.0,
     "DryBag_Black": 1.25,
     "ImprovisedContainer": 1.0,
     "WoodenCrate": 1.1,
@@ -35,7 +35,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
     rows = len(matrix)
-    cols = len(matrix[0])
+    cols = len(matrix[0]) if rows > 0 else 0
 
     origin_x = origin.get("x", 0.0)
     origin_y = origin.get("y", 0.0)
@@ -47,13 +47,16 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 
     objects = []
 
-    for row in range(rows):
+    for row_index, row in enumerate(matrix):
+        if not isinstance(row, list) or len(row) != cols:
+            continue  # ✅ Skip malformed rows
+
         for col in range(cols):
-            if matrix[row][col] != "#":
+            if row[col] != "#":
                 continue
 
             pos_x = round(offset_x + (col * spacing), 6)
-            pos_z = round(offset_z + (row * spacing), 6)
+            pos_z = round(offset_z + (row_index * spacing), 6)
 
             obj_pos = [pos_x, pos_z, round(base_y, 6)]  # ✅ XZY
 
