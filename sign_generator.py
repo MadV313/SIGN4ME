@@ -35,13 +35,6 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     rows = len(matrix)
     cols = max(len(row) for row in matrix)
 
-    # 🔧 Pad rows in-place to match max column width
-    for i, row in enumerate(matrix):
-        if len(row) < cols:
-            pad_amt = cols - len(row)
-            matrix[i] += [' '] * pad_amt
-            print(f"🔧 Padded row {i} with {pad_amt} space(s) to reach {cols} cols")
-
     origin_x = origin.get("x", 0.0)
     origin_y = origin.get("y", 0.0)
     origin_z = origin.get("z", 0.0)
@@ -53,8 +46,9 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
     objects = []
 
     for row in range(rows):
-        for col in range(cols):
-            if matrix[row][col] != "#":
+        current_row = matrix[row]
+        for col in range(len(current_row)):  # ✅ Only loop actual width of current row
+            if current_row[col] != "#":
                 continue
 
             pos_x = round(offset_x + (col * spacing), 6)
@@ -79,7 +73,7 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
         print(f"⚠️ Object cap exceeded: {len(objects)} > {MAX_OBJECTS}")
         raise ValueError("Exceeded object limit.")
 
-    print(f"🧱 Final object count: {len(objects)} from {rows} rows × {cols} cols")
+    print(f"🧱 Final object count: {len(objects)} from {rows} rows × variable cols")
     return objects
 
 def save_object_json(object_list: list, output_path: str):
