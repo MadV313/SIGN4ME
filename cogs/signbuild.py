@@ -68,23 +68,19 @@ class SignBuild(commands.Cog):
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
-        # ✅ Step 1: Generate and flip character matrix
-        matrix = [row[::-1] for row in generate_letter_matrix(text.upper())[::-1]]
-        
+        # ✅ Step 1: Generate matrix (no double flipping)
+        matrix = generate_letter_matrix(text.upper())
+
+        print(f"🔎 Matrix dimensions: {len(matrix)} rows x {len(matrix[0])} cols")
+        print(f"🔢 Raw # count: {sum(row.count('#') for row in matrix)}")
+
         if not matrix or not any('#' in row for row in matrix):
             await interaction.followup.send("⚠️ No valid characters detected. Please use capital A–Z letters only.", ephemeral=True)
             return
-        
-        # 🔄 Adjust origin logic for upright mode (Z→Y stacking)
-        ypr_mode = orientation.value if orientation else "upright"
-        if ypr_mode == "upright":
-            origin = {
-                "x": origin["x"],
-                "y": origin["y"],
-                "z": origin["z"]
-            }
 
-        # ✅ Step 2: Generate objects from matrix using internal YPR mode
+        ypr_mode = orientation.value if orientation else "upright"
+
+        # ✅ Step 2: Generate object list
         try:
             objects = letter_to_object_list(
                 matrix=matrix,
@@ -95,10 +91,11 @@ class SignBuild(commands.Cog):
                 spacing=object_spacing,
                 ypr_mode=ypr_mode
             )
-
         except ValueError as e:
             await interaction.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
             return
+
+        print(f"🧱 Generated object count: {len(objects)}")
 
         if not objects:
             await interaction.followup.send("⚠️ Sign generation failed. No objects were created. Check your origin and spacing settings.", ephemeral=True)
@@ -110,17 +107,27 @@ class SignBuild(commands.Cog):
                 ephemeral=True
             )
 
-        # ✅ Step 3: Write to JSON and preview
+        # ✅ Step 3: Write outputs
         output_json_path = os.path.join("outputs", "Sign4ME.json")
         preview_path = os.path.join("previews", "sign_preview.png")
 
         os.makedirs("outputs", exist_ok=True)
         os.makedirs("previews", exist_ok=True)
 
-        with open(output_json_path, "w") as f:
-            json.dump({"Objects": objects}, f, indent=2)
+        try:
+            with open(output_json_path, "w") as f:
+                json.dump({"Objects": objects}, f, indent=2)
+            print(f"💾 JSON saved: {output_json_path}")
+        except Exception as e:
+            await interaction.followup.send(f"❌ Failed to write JSON: {e}", ephemeral=True)
+            return
 
-        render_sign_preview(matrix, preview_path, object_type=obj_type)
+        try:
+            render_sign_preview(matrix, preview_path, object_type=obj_type)
+            print(f"🖼️ Preview saved: {preview_path}")
+        except Exception as e:
+            await interaction.followup.send(f"❌ Failed to render preview: {e}", ephemeral=True)
+            return
 
         # ✅ Step 4: Save config
         config["default_object"] = obj_type
@@ -146,7 +153,7 @@ class SignBuild(commands.Cog):
             export_mode="json"
         )
 
-        # ✅ Step 6: Gallery or Admin Channel Post
+        # ✅ Step 6: Gallery Post
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
