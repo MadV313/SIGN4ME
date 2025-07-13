@@ -72,7 +72,8 @@ def letter_to_object_list(matrix: list, object_type: str, origin: dict, offset: 
 
     # ✅ Truncate only after fully populating the list
     if len(objects) > MAX_OBJECTS:
-        objects = objects[:MAX_OBJECTS]
+        print(f"⚠️ Object cap exceeded: {len(objects)} > {MAX_OBJECTS}")
+        raise ValueError("Exceeded object limit.")
 
     return objects
 
